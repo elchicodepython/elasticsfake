@@ -1,0 +1,12 @@
+elasticsfake_user: elasticsfake
+elasticsfake_dir: /opt/elasticsfake/
+venv_dir: "{{ elasticsfake_dir }}/venv"
+elasticsfake_logging_file: /var/log/elasticsfake/elasticsfake.log
+elasticsfake_config_file: /etc/elasticsfake/config.yaml
+service_name: elasticsfake
+elasticsfake_port: 9200
+elasticsfake_workers: 2
+elasticsfake_concurrency_limit: 1000
+elasticsfake_logging_level: INFO
+elasticsfake_bulk_handler_type: file
+elasticfake_listening_address: 0.0.0.0

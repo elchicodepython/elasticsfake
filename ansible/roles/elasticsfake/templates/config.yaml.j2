@@ -1,0 +1,16 @@
+app:
+    logging:
+      level: {{ elasticsfake_logging_level | default('INFO') }}
+      format: {{ elasticsfake_logging_format | default('"%(asctime)s - %(name)s - %(levelname)s - %(message)s"') }}
+      file: {{ elasticsfake_logging_file | default('/var/log/elasticsfake/elasticsfake.log') }}
+      max_bytes_before_rotation: {{ elasticsfake_max_bytes_before_rotation | default('10485760') }}
+      rotated_log_files: {{ elasticsfake_rotated_log_files | default('5') }}
+
+infra:
+  bulk_handler:
+    type: {{ elasticsfake_bulk_handler_type }}
+{% if elasticsfake_bulk_handler_type == 'file' %}
+  
+    file:
+      path: {{ elasticsfake_bulk_handler_file_path | default('/var/log/elasticsfake/records') }}
+{% endif %}

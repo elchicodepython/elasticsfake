@@ -1,0 +1,82 @@
+- name: Install system dependencies
+  apt:
+    name:
+      - python3-venv
+      - python3-pip
+    update_cache: yes
+
+- name: Create application user
+  user:
+    name: "{{ elasticsfake_user }}"
+    system: yes
+    create_home: no
+    shell: /bin/false
+
+- name: Create application directories
+  file:
+    path: "{{ item }}"
+    state: directory
+    owner: "{{ elasticsfake_user }}"
+    group: "{{ elasticsfake_user }}"
+    mode: "0755"
+  loop:
+    - "{{ elasticsfake_dir }}"
+    - "{{ elasticsfake_config_file | dirname  }}"
+    - "{{ elasticsfake_logging_file | dirname }}"
+
+- name: Copy application code
+  copy:
+    src: "{{ elasticsfake_local_folder }}"
+    dest: "{{ elasticsfake_dir }}"
+    owner: "{{ elasticsfake_user }}"
+    group: "{{ elasticsfake_user }}"
+    mode: "0744"
+
+- name: Create virtualenv if it does not exist
+  ansible.builtin.command:
+    cmd: python3 -m venv {{ venv_dir }}
+  args:
+    creates: "{{ venv_dir }}"
+
+- name: Install Python dependencies in the virtualenv
+  pip:
+    requirements: "{{ elasticsfake_dir }}/requirements.txt"
+    virtualenv: "{{ venv_dir }}"
+    virtualenv_python: python3
+
+- name: Copy configuration template
+  template:
+    src: config.yaml.j2
+    dest: "{{ elasticsfake_config_file }}"
+    owner: "{{ elasticsfake_user }}"
+    group: "{{ elasticsfake_user }}"
+    mode: '0644'
+
+- name: Create systemd service file for FastAPI
+  copy:
+    dest: "/etc/systemd/system/{{ service_name }}.service"
+    content: |
+      [Unit]
+      Description=ElasticsFake - A Lightweight Elasticsearch Bulk API handler
+      After=network.target
+
+      [Service]
+      User={{ elasticsfake_user }}
+      Group={{ elasticsfake_user }}
+      WorkingDirectory={{ elasticsfake_dir }}
+      Environment="PATH={{ elasticsfake_dir  }}"
+      Environment="CONFIG_FILE_PATH={{ elasticsfake_config_file }}"
+      ExecStart={{ [venv_dir, "bin/uvicorn"] | path_join }} main:app --host {{ elasticfake_listening_address }} --port {{ elasticsfake_port }} --workers {{ elasticsfake_workers }} --limit-concurrency {{ elasticsfake_concurrency_limit }}
+
+      Restart=always
+
+      [Install]
+      WantedBy=multi-user.target
+  notify:
+    - Reload systemd
+
+- name: Enable ElasticsFake service
+  systemd:
+    name: "{{ service_name }}"
+    enabled: yes
+    state: restarted

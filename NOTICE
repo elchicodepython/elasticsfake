@@ -1,0 +1,12 @@
+NOTICE
+Project: ElasticsFake — A lightweight Elasticsearch shim for Beats agents
+
+Crafted with too much coffee ☕ and questionable WiFi,
+in a cave somewhere on the internet. 🕳️💻
+
+This product includes software developed by:
+  Samuel López Saura (@elchicodepython)
+  Cybersecurity enthusiast, developer & ham radio hobbyist
+
+Licensed under the Apache License, Version 2.0
+See LICENSE file for details.

@@ -1,0 +1,13 @@
+app:
+    logging:
+      level: INFO
+      format: "%(asctime)s - %(name)s - %(levelname)s - %(message)s"
+      file: elasticsfake.log
+      max_bytes_before_rotation: 10485760 # 10MB
+      rotated_log_files: 5 # If set to 0, will store all
+
+infra:
+  bulk_handler:
+    type: file
+    file:
+      path: output.txt

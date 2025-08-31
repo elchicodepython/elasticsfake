@@ -1,0 +1,7 @@
+
+- hosts: logs_box
+  become: true
+  roles:
+    - elasticsfake
+  vars:
+    elasticsfake_local_folder: "{{ playbook_dir }}/../elasticsfake/"
