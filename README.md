@@ -26,9 +26,6 @@ Perfect for home labs, IoT setups, or personal experiments — collect logs reli
 - Acts as a shim for Elasticsearch: agents think they are talking to a real ES cluster.
 - Lightweight and easy to deploy on Raspberry Pi 3/4 or any mini-PC.
 
-> This is probably not what you want for a professional setup but it solves a use case I had
-> where I wanted to send winlogbeat and other elastics-api data to a raspberry pi.
-
 Ideal for personal projects, home labs, and learning environments.
 
 ## Usage/Installation
