@@ -12,6 +12,14 @@ Perfect for home labs, IoT setups, or personal experiments — collect logs reli
 
 </div>
 
+
+- Accept logs from Beats agents (Elastic Agent, Filebeat, etc.).
+- Save logs locally or forward them to your preferred log storage solution.
+- Acts as a shim for Elasticsearch: agents think they are talking to a real ES cluster.
+- Lightweight and easy to deploy on Raspberry Pi 3/4 or any mini-PC.
+
+
+
 ## Key points / highlights
 
 - ✅ Elasticsearch-compatible shim for \_bulk requests.
@@ -19,14 +27,6 @@ Perfect for home labs, IoT setups, or personal experiments — collect logs reli
 - ✅ Runs on minimal hardware – Raspberry Pi or mini-PC.
 - ✅ DIY / open-source – you can tweak it to your needs.
 
-## DIY Offline Log Collector / Elasticsearch Shim
-
-- Accept logs from Beats agents (Winlogbeat, Filebeat, etc.).
-- Save logs locally or forward them to your preferred log storage solution.
-- Acts as a shim for Elasticsearch: agents think they are talking to a real ES cluster.
-- Lightweight and easy to deploy on Raspberry Pi 3/4 or any mini-PC.
-
-Ideal for personal projects, home labs, and learning environments.
 
 ## Usage/Installation
 
@@ -64,6 +64,34 @@ Run the ansible playbook.
 pip install ansible
 ansible-playbook -i inventory playbook.yml
 ```
+
+## Service configuration examples
+
+In this POC version of the project there is no support yet for authentication, HTTPs or compression.
+This support can be added either updating the code or adding an nginx on top of it.
+
+### ElasticsAgent configuration
+
+```
+outputs:
+  default:
+    type: elasticsearch
+    hosts: ["http://192.168.1.9:9200"]
+    compression_level: 0
+```
+
+### Logstash
+
+```
+output {
+  elasticsearch {
+    hosts => ["http://192.168.1.9:9200"]
+    manage_template => false
+    http_compression => false
+  }
+}
+```
+
 
 ## Why did I developed this?
 
