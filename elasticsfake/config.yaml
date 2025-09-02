@@ -17,6 +17,5 @@ infra:
       port: 1883
       topic: logs/bulk
       qos: 1
-      keepalive: 60
       username: user
       password: password
