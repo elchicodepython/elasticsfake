@@ -11,3 +11,12 @@ infra:
     type: file
     file:
       path: output.txt
+
+    mqtt:
+      broker: 192.168.1.9
+      port: 1883
+      topic: logs/bulk
+      qos: 1
+      keepalive: 60
+      username: user
+      password: password

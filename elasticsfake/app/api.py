@@ -1,6 +1,7 @@
 from logging import getLogger
 from fastapi import FastAPI, Request
 from fastapi.responses import JSONResponse, Response
+from domain.bulk_event import BulkEvent
 from conf import container
 
 app = FastAPI()
@@ -91,7 +92,7 @@ async def bulk(request: Request):
         current_position = idx * 2
         event_metadata = lines_received[current_position]
         event_doc = lines_received[current_position + 1]
-        events_received.append({"meta": event_metadata, "doc": event_doc})
+        events_received.append(BulkEvent(event_metadata, event_doc))
 
     container.bulk_handler.handle_bulk(events_received)
     logger.info("%s events processed", events_received_count)
