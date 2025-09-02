@@ -78,8 +78,9 @@ async def license_get():
 async def bulk(request: Request):
     data = await request.body()
     data_str = data.decode("utf-8", errors="ignore")
-    lines_received = data_str.splitlines()
+    lines_received = [line for line in data_str.splitlines() if line.strip()]
     # Each event is sent in 2 lines
+    # Sometimes empty lines are sent, we ignore them
     events_received_count = len(lines_received) // 2
     events_received = []
 

@@ -32,7 +32,12 @@ class FileBulkHandler(BulkHandler):
         document = json.loads(event["doc"])
 
         # Injects _index metadata into the document line
-        document["_index"] = meta["index"]["_index"]
+        if "_index" in meta:
+            document["_index"] = meta["index"]["_index"]
+        elif "create" in meta:
+            document["_index"] = meta["create"]["_index"]
+        else:
+            logger.error("No _index found in meta: %s", meta)
 
         return json.dumps(document)
 
