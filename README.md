@@ -92,6 +92,17 @@ output {
 }
 ```
 
+## What Happens After Data Collection
+
+Data handling after collection is beyond the scope of this project.
+
+![elasticsfake-mqtt-logstash-elastics-diagram](./docs/_static/flow-sample-mqtt-handler.png)
+
+In my current setup, logs are collected by Elasticsfake on a Raspberry Pi®,
+and when I start my laptop, Logstash retrieves them from MQTT and injects
+them into Elastics. This avoids running Elastics continuously while still
+allowing analysis of activity from all my devices.
+
 
 ## Why did I developed this?
 
