@@ -1,3 +1,4 @@
+import signal
 from domain.bulk_handler import BulkHandler
 from infra.bulk_handler import FileBulkHandler, MqttBulkHandler
 from app.event_transformer import SingleJsonWithIndexInjected
@@ -34,8 +35,13 @@ def configure_bulk_handler(conf: dict) -> BulkHandler:
     handler_type = conf.get("infra.bulk_handler.type", "file").lower()
 
     if handler_type == "file":
-        return configure_file_bulk_handler(conf)
+        handler = configure_file_bulk_handler(conf)
     elif handler_type == "mqtt":
-        return configure_mqtt_bulk_handler(conf)
+        handler = configure_mqtt_bulk_handler(conf)
     else:
         raise ValueError(f"Unsupported bulk handler type: {handler_type}")
+
+    signal.signal(signal.SIGINT, lambda *_: handler.hook_terminate())
+    signal.signal(signal.SIGTERM, lambda *_: handler.hook_terminate())
+
+    return handler

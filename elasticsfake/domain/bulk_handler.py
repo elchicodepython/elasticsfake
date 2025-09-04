@@ -8,3 +8,6 @@ class BulkHandler(ABC):
     def handle_bulk(self, bulk_data: List[BulkEvent]) -> None:
         """Process Elasticsearch bulk data"""
         pass
+
+    def hook_terminate(self):
+        pass
