@@ -1,0 +1,18 @@
+app:
+    logging:
+      level: WARNING
+      format: "%(asctime)s - %(name)s - %(levelname)s - %(message)s"
+      file: /tmp/elasticsfake-test.log
+      max_bytes_before_rotation: 10485760
+      rotated_log_files: 5
+
+    auth:
+      enabled: false
+      username: elastic
+      password: changeme
+
+infra:
+  bulk_handler:
+    type: file
+    file:
+      path: /tmp/elasticsfake-test-output.txt

@@ -1,11 +1,63 @@
+import gzip
+import secrets
 from logging import getLogger
-from fastapi import FastAPI, Request
+from fastapi import Depends, FastAPI, HTTPException, Request
 from fastapi.responses import JSONResponse, Response
+from fastapi.security import HTTPBasic, HTTPBasicCredentials
 from domain.bulk_event import BulkEvent
 from conf import container
 
 app = FastAPI()
 logger = getLogger("elasticsfake")
+_http_basic = HTTPBasic(auto_error=False)
+
+
+def _make_auth_dependency():
+    conf = container.confdict
+    enabled = conf.get("app.auth.enabled", False)
+    if not enabled:
+        def no_auth():
+            return None
+        return no_auth
+
+    username = conf.get("app.auth.username", "elastic")
+    password = conf.get("app.auth.password", "changeme")
+
+    def verify(credentials: HTTPBasicCredentials = Depends(_http_basic)):
+        if credentials is None:
+            raise HTTPException(
+                status_code=401,
+                detail="Authentication required",
+                headers={"WWW-Authenticate": "Basic"},
+            )
+        ok = secrets.compare_digest(credentials.username, username) and \
+             secrets.compare_digest(credentials.password, password)
+        if not ok:
+            raise HTTPException(
+                status_code=401,
+                detail="Invalid credentials",
+                headers={"WWW-Authenticate": "Basic"},
+            )
+
+    return verify
+
+
+_auth = _make_auth_dependency()
+
+if container.confdict.get("app.gzip.enabled", True):
+    @app.middleware("http")
+    async def decompress_gzip(request: Request, call_next):
+        if request.headers.get("content-encoding", "").lower() == "gzip":
+            body = await request.body()
+            try:
+                decompressed = gzip.decompress(body)
+            except Exception:
+                return Response(content="Invalid gzip body", status_code=400)
+            # Starlette caches the body in _body after the first read;
+            # overwrite it so downstream handlers see the decompressed bytes.
+            request._body = decompressed
+
+        return await call_next(request)
 
 
 @app.middleware("http")
@@ -16,12 +68,12 @@ async def add_custom_header(request: Request, call_next):
 
 
 @app.head("/")
-async def root_head():
-    return Response(status_code=200)  # Solo OK, sin contenido
+async def root_head(_: None = Depends(_auth)):
+    return Response(status_code=200)
 
 
 @app.get("/")
-async def root_get():
+async def root_get(_: None = Depends(_auth)):
     return JSONResponse(
         content={
             "name": "ElasticsFake",
@@ -31,15 +83,13 @@ async def root_get():
     )
 
 
-# HEAD /_cluster/health → solo 200 OK
 @app.head("/_cluster/health")
-async def cluster_health_head():
+async def cluster_health_head(_: None = Depends(_auth)):
     return Response(status_code=200)
 
 
-# GET /_cluster/health → devuelve un estado de cluster compatible
 @app.get("/_cluster/health")
-async def cluster_health_get():
+async def cluster_health_get(_: None = Depends(_auth)):
     return JSONResponse(
         content={
             "cluster_name": "docker-cluster",
@@ -62,7 +112,7 @@ async def cluster_health_get():
 
 
 @app.get("/_license")
-async def license_get():
+async def license_get(_: None = Depends(_auth)):
     return JSONResponse(
         content={
             "license": {
@@ -76,7 +126,7 @@ async def license_get():
 
 
 @app.post("/_bulk")
-async def bulk(request: Request):
+async def bulk(request: Request, _: None = Depends(_auth)):
     data = await request.body()
     data_str = data.decode("utf-8", errors="ignore")
     lines_received = [line for line in data_str.splitlines() if line.strip()]
