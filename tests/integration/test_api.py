@@ -72,6 +72,24 @@ def test_x_elastic_product_header(client, method, path):
 
 
 # ---------------------------------------------------------------------------
+# Prometheus metrics
+# ---------------------------------------------------------------------------
+
+def test_metrics_returns_prometheus_text(client):
+    r = client.get("/metrics")
+    assert r.status_code == 200
+    assert r.headers["content-type"].startswith("text/plain")
+
+
+def test_metrics_counts_bulk_requests(client, mock_bulk_handler):
+    client.post("/_bulk", content=BULK_BODY,
+                headers={"Content-Type": "application/x-ndjson"})
+    body = client.get("/metrics").text
+    assert 'elasticsfake_bulk_requests_total{status="success"}' in body
+    assert "elasticsfake_bulk_events_processed_total" in body
+
+
+# ---------------------------------------------------------------------------
 # Bulk endpoint — plain body
 # ---------------------------------------------------------------------------
 

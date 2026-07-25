@@ -4,12 +4,21 @@ from logging import getLogger
 from fastapi import Depends, FastAPI, HTTPException, Request
 from fastapi.responses import JSONResponse, Response
 from fastapi.security import HTTPBasic, HTTPBasicCredentials
+from prometheus_client import CONTENT_TYPE_LATEST, Counter, generate_latest
 from domain.bulk_event import BulkEvent
 from conf import container
 
 app = FastAPI()
 logger = getLogger("elasticsfake")
 _http_basic = HTTPBasic(auto_error=False)
+
+bulk_requests_total = Counter(
+    "elasticsfake_bulk_requests_total", "Total /_bulk requests", ["status"]
+)
+bulk_events_processed_total = Counter(
+    "elasticsfake_bulk_events_processed_total",
+    "Total events successfully handed off to the bulk_handler",
+)
 
 
 def _make_auth_dependency():
@@ -125,6 +134,11 @@ async def license_get(_: None = Depends(_auth)):
     )
 
 
+@app.get("/metrics")
+async def metrics():
+    return Response(content=generate_latest(), media_type=CONTENT_TYPE_LATEST)
+
+
 @app.post("/_bulk")
 async def bulk(request: Request, _: None = Depends(_auth)):
     data = await request.body()
@@ -148,6 +162,7 @@ async def bulk(request: Request, _: None = Depends(_auth)):
         container.bulk_handler.handle_bulk(events_received)
     except Exception:
         logger.exception("Failed to process %s events", events_received_count)
+        bulk_requests_total.labels(status="error").inc()
         items = [
             {
                 "index": {
@@ -163,5 +178,7 @@ async def bulk(request: Request, _: None = Depends(_auth)):
         return JSONResponse({"took": 1, "errors": True, "items": items})
 
     logger.info("%s events processed", events_received_count)
+    bulk_requests_total.labels(status="success").inc()
+    bulk_events_processed_total.inc(events_received_count)
 
     return JSONResponse({"took": 1, "errors": False, "items": []})

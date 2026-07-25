@@ -28,6 +28,7 @@ Perfect for home labs, IoT setups, or personal experiments — collect logs reli
 - ✅ HTTP Basic Auth – optional, toggle via config.
 - ✅ Gzip decompression – enabled by default.
 - ✅ Native TLS – optional, toggle via config, no reverse proxy required.
+- ✅ Prometheus metrics – exposed at `/metrics`.
 - ✅ DIY / open-source – you can tweak it to your needs.
 
 
