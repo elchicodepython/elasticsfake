@@ -25,6 +25,9 @@ Perfect for home labs, IoT setups, or personal experiments — collect logs reli
 - ✅ Elasticsearch-compatible shim for \_bulk requests.
 - ✅ Local storage – no backend required.
 - ✅ Runs on minimal hardware – Raspberry Pi or mini-PC.
+- ✅ HTTP Basic Auth – optional, toggle via config.
+- ✅ Gzip decompression – enabled by default.
+- ✅ Native TLS – optional, toggle via config, no reverse proxy required.
 - ✅ DIY / open-source – you can tweak it to your needs.
 
 
@@ -67,17 +70,36 @@ ansible-playbook -i inventory playbook.yml
 
 ## Service configuration examples
 
-In this POC version of the project there is no support yet for authentication, HTTPs or compression.
-This support can be added either updating the code or adding an nginx on top of it.
+Authentication, gzip compression and TLS are all supported natively — no nginx required.
 
-### ElasticsAgent configuration
+### Elasticsfake config (`config.yaml`)
 
+```yaml
+app:
+  auth:
+    enabled: true        # set false to disable
+    username: elastic
+    password: changeme
+
+  gzip:
+    enabled: true        # enabled by default
+
+  tls:
+    enabled: true        # set false to disable, or front it with your own reverse proxy
+    certfile: /path/to/cert.pem
+    keyfile: /path/to/key.pem
 ```
+
+### Elastic Agent configuration
+
+```yaml
 outputs:
   default:
     type: elasticsearch
     hosts: ["http://192.168.1.9:9200"]
-    compression_level: 0
+    username: elastic
+    password: changeme
+    compression_level: 1
 ```
 
 ### Logstash
@@ -86,8 +108,10 @@ outputs:
 output {
   elasticsearch {
     hosts => ["http://192.168.1.9:9200"]
+    user => "elastic"
+    password => "changeme"
     manage_template => false
-    http_compression => false
+    http_compression => true
   }
 }
 ```

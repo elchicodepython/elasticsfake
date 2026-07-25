@@ -14,6 +14,11 @@ app:
     gzip:
       enabled: true
 
+    tls:
+      enabled: false       # set true to serve HTTPS directly, no nginx needed
+      certfile: /path/to/cert.pem
+      keyfile: /path/to/key.pem
+
 infra:
   bulk_handler:
     type: file
