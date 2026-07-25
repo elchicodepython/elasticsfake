@@ -144,7 +144,24 @@ async def bulk(request: Request, _: None = Depends(_auth)):
         event_doc = lines_received[current_position + 1]
         events_received.append(BulkEvent(event_metadata, event_doc))
 
-    container.bulk_handler.handle_bulk(events_received)
+    try:
+        container.bulk_handler.handle_bulk(events_received)
+    except Exception:
+        logger.exception("Failed to process %s events", events_received_count)
+        items = [
+            {
+                "index": {
+                    "status": 500,
+                    "error": {
+                        "type": "internal_error",
+                        "reason": "bulk_handler failed to process this batch",
+                    },
+                }
+            }
+            for _ in events_received
+        ]
+        return JSONResponse({"took": 1, "errors": True, "items": items})
+
     logger.info("%s events processed", events_received_count)
 
     return JSONResponse({"took": 1, "errors": False, "items": []})

@@ -140,6 +140,26 @@ def test_bulk_invalid_gzip_returns_400(client):
 
 
 # ---------------------------------------------------------------------------
+# Bulk endpoint — handler failure
+# ---------------------------------------------------------------------------
+
+def test_bulk_handler_failure_reports_errors(client, mock_bulk_handler):
+    def failing_handle_bulk(_events):
+        raise RuntimeError("disk full")
+
+    mock_bulk_handler.handle_bulk = failing_handle_bulk
+
+    r = client.post("/_bulk", content=BULK_BODY,
+                    headers={"Content-Type": "application/x-ndjson"})
+
+    assert r.status_code == 200
+    body = r.json()
+    assert body["errors"] is True
+    assert len(body["items"]) == 2
+    assert body["items"][0]["index"]["status"] == 500
+
+
+# ---------------------------------------------------------------------------
 # Authentication
 # ---------------------------------------------------------------------------
 
