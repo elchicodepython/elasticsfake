@@ -27,3 +27,4 @@ infra:
       qos: 1
       username: user
       password: password
+      connect_timeout: 30 # seconds to wait for initial broker connection before failing

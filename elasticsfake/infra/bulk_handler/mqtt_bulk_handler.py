@@ -16,6 +16,14 @@ def on_connect(_client, _userdata, _flags, rc):
         logger.error("Broker connection failed with code %s", rc)
 
 
+def on_disconnect(_client, _userdata, rc):
+    if rc == 0:
+        logger.info("Disconnected from MQTT broker")
+    else:
+        logger.warning(
+            "Lost connection to MQTT broker (code %s), reconnecting...", rc
+        )
+
 
 class MqttBulkHandler(BulkHandler):
     def __init__(
@@ -27,6 +35,7 @@ class MqttBulkHandler(BulkHandler):
         qos: int = 1,
         username: str = None,
         password: str = None,
+        connect_timeout: float = 30,
     ):
         self.__event_transformer = event_transformer
         self.__topic = topic
@@ -34,6 +43,8 @@ class MqttBulkHandler(BulkHandler):
 
         self.__client = mqtt.Client()
         self.__client.on_connect = on_connect
+        self.__client.on_disconnect = on_disconnect
+        self.__client.reconnect_delay_set(min_delay=1, max_delay=30)
 
         if username and password:
             self.__client.username_pw_set(username, password)
@@ -41,10 +52,19 @@ class MqttBulkHandler(BulkHandler):
         self.__client.connect(broker, port)
         self.__client.loop_start()
 
-        # Esperar a que la conexión se establezca
+        # Wait for the initial connection to be established, bounded so a
+        # dead/unreachable broker fails fast instead of hanging forever.
+        waited = 0.0
         while not self.__client.is_connected():
+            if waited >= connect_timeout:
+                self.__client.loop_stop()
+                raise ConnectionError(
+                    f"Could not connect to MQTT broker {broker}:{port} "
+                    f"within {connect_timeout}s"
+                )
             logger.debug("Waiting for MQTT connection...")
             time.sleep(0.1)
+            waited += 0.1
 
     def handle_bulk(self, events: List[BulkEvent]):
         for event in events:

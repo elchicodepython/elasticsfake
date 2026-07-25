@@ -23,11 +23,12 @@ def configure_mqtt_bulk_handler(conf: dict) -> BulkHandler:
     qos = conf.get("infra.bulk_handler.mqtt.qos", 1)
     username = conf.get("infra.bulk_handler.mqtt.username", None)
     password = conf.get("infra.bulk_handler.mqtt.password", None)
+    connect_timeout = conf.get("infra.bulk_handler.mqtt.connect_timeout", 30)
 
     event_transformer = SingleJsonWithIndexInjected()
 
     return MqttBulkHandler(
-        event_transformer, broker, port, topic, qos, username, password
+        event_transformer, broker, port, topic, qos, username, password, connect_timeout
     )
 
 
