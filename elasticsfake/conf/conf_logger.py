@@ -1,4 +1,5 @@
 import logging
+import logging.handlers
 
 
 def configure_logger(conf: dict) -> logging.Logger:

@@ -1,4 +1,5 @@
 import logging
+import logging.handlers
 from typing import List
 from domain.bulk_handler import BulkHandler
 from domain.bulk_event import BulkEvent
